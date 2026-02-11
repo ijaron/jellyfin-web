@@ -8,8 +8,9 @@ import { getPlaylistsApi } from '@jellyfin/sdk/lib/utils/api/playlists-api';
 import datetime from 'scripts/datetime';
 
 import { appHost } from './apphost';
+import { AppFeature } from 'constants/appFeature';
 import globalize from 'lib/globalize';
-import ServerConnections from './ServerConnections';
+import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { toApi } from 'utils/jellyfin-apiclient/compat';
 
 export function getDisplayName(item, options = {}) {
@@ -249,7 +250,7 @@ export function canShare (item, user) {
     if (isLocalItem(item)) {
         return false;
     }
-    return user.Policy.EnablePublicSharing && appHost.supports('sharing');
+    return user.Policy.EnablePublicSharing && appHost.supports(AppFeature.Sharing);
 }
 
 export function enableDateAddedDisplay (item) {
@@ -266,9 +267,6 @@ export function canMarkPlayed (item) {
             return true;
         }
     } else if (item.MediaType === 'Audio') {
-        if (item.Type === 'AudioPodcast') {
-            return true;
-        }
         if (item.Type === 'AudioBook') {
             return true;
         }
@@ -277,8 +275,7 @@ export function canMarkPlayed (item) {
     return item.Type === 'Series'
         || item.Type === 'Season'
         || item.Type === 'BoxSet'
-        || item.MediaType === 'Book'
-        || item.MediaType === 'Recording';
+        || item.MediaType === 'Book';
 }
 
 export function canRate (item) {

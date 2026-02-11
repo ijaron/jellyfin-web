@@ -7,30 +7,23 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
+import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
-import ServerConnections from 'components/ServerConnections';
 import SimpleAlert from 'components/SimpleAlert';
 import { QUERY_KEY, useNamedConfiguration } from 'hooks/useNamedConfiguration';
 import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
+import { ServerConnections } from 'lib/jellyfin-apiclient';
 import React, { useCallback, useState } from 'react';
 import { type ActionFunctionArgs, Form, useActionData, useNavigation } from 'react-router-dom';
 import { ActionData } from 'types/actionData';
 import { queryClient } from 'utils/query/queryClient';
+import type { XbmcMetadataOptions } from '@jellyfin/sdk/lib/generated-client/models/xbmc-metadata-options';
 
 const CONFIG_KEY = 'xbmcmetadata';
-
-interface NFOSettingsConfig {
-    UserId?: string;
-    EnableExtraThumbsDuplication?: boolean;
-    EnablePathSubstitution?: boolean;
-    ReleaseDateFormat?: string;
-    SaveImagePathsInNfo?: boolean;
-};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
     const api = ServerConnections.getCurrentApi();
@@ -39,7 +32,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const formData = await request.formData();
     const data = Object.fromEntries(formData);
 
-    const newConfig: NFOSettingsConfig = {
+    const newConfig: XbmcMetadataOptions = {
         UserId: data.UserId?.toString(),
         ReleaseDateFormat: 'yyyy-MM-dd',
         SaveImagePathsInNfo: data.SaveImagePathsInNfo?.toString() === 'on',
@@ -64,7 +57,7 @@ export const Component = () => {
         data: config,
         isPending: isConfigPending,
         isError: isConfigError
-    } = useNamedConfiguration(CONFIG_KEY);
+    } = useNamedConfiguration<XbmcMetadataOptions>(CONFIG_KEY);
     const {
         data: users,
         isPending: isUsersPending,
@@ -74,8 +67,6 @@ export const Component = () => {
     const actionData = useActionData() as ActionData | undefined;
     const isSubmitting = navigation.state === 'submitting';
     const [isAlertOpen, setIsAlertOpen] = useState(false);
-
-    const nfoConfig = config as NFOSettingsConfig;
 
     const onAlertClose = useCallback(() => {
         setIsAlertOpen(false);
@@ -111,21 +102,24 @@ export const Component = () => {
                                     {globalize.translate('SettingsSaved')}
                                 </Alert>
                             )}
-                            <Typography variant='h2'>{globalize.translate('TabNfoSettings')}</Typography>
+                            <Typography variant='h1'>{globalize.translate('TabNfoSettings')}</Typography>
                             <Typography>{globalize.translate('HeaderKodiMetadataHelp')}</Typography>
 
                             <TextField
                                 name={'UserId'}
                                 label={globalize.translate('LabelKodiMetadataUser')}
-                                defaultValue={nfoConfig.UserId || ''}
+                                defaultValue={config.UserId || ''}
                                 select
-                                SelectProps={{
-                                    displayEmpty: true
-                                }}
-                                InputLabelProps={{
-                                    shrink: true
-                                }}
                                 helperText={globalize.translate('LabelKodiMetadataUserHelp')}
+                                slotProps={{
+                                    select: {
+                                        displayEmpty: true
+                                    },
+
+                                    inputLabel: {
+                                        shrink: true
+                                    }
+                                }}
                             >
                                 <MenuItem value=''>{globalize.translate('None')}</MenuItem>
                                 {users.map(user =>
@@ -136,9 +130,9 @@ export const Component = () => {
                             <FormControl>
                                 <FormControlLabel
                                     control={
-                                        <Switch
+                                        <Checkbox
                                             name={'SaveImagePathsInNfo'}
-                                            defaultChecked={nfoConfig.SaveImagePathsInNfo}
+                                            defaultChecked={config.SaveImagePathsInNfo}
                                         />
                                     }
                                     label={globalize.translate('LabelKodiMetadataSaveImagePaths')}
@@ -149,9 +143,9 @@ export const Component = () => {
                             <FormControl>
                                 <FormControlLabel
                                     control={
-                                        <Switch
+                                        <Checkbox
                                             name={'EnablePathSubstitution'}
-                                            defaultChecked={nfoConfig.EnablePathSubstitution}
+                                            defaultChecked={config.EnablePathSubstitution}
                                         />
                                     }
                                     label={globalize.translate('LabelKodiMetadataEnablePathSubstitution')}
@@ -162,9 +156,9 @@ export const Component = () => {
                             <FormControl>
                                 <FormControlLabel
                                     control={
-                                        <Switch
+                                        <Checkbox
                                             name={'EnableExtraThumbsDuplication'}
-                                            defaultChecked={nfoConfig.EnableExtraThumbsDuplication}
+                                            defaultChecked={config.EnableExtraThumbsDuplication}
                                         />
                                     }
                                     label={globalize.translate('LabelKodiMetadataEnableExtraThumbs')}
